@@ -44,27 +44,43 @@ def incnt(im): #подсчет количества внутренних кон�
     return len(contours_all) - len(contours_ex)
 
 def vertical_lines(im): #подсчет количества вертикальных линий у буквы
-    h, w = im.shape
+    _, w = im.shape
     v_lines = [np.array([])]
 
     for j in range(w - 1):
-        m = 60.0
-        if np.mean(im[:, j]) < m:
-            if np.mean(im[:, j + 1]) < m:
+        thr = 60.0
+        if np.mean(im[:, j]) < thr:
+            if np.mean(im[:, j + 1]) < thr:
                 if len(v_lines[-1]) != 0:
                     v_lines[-1] = np.vstack([v_lines[-1], im[:, j]])
                 else:
                     v_lines[-1] = im[:, j].copy()
         else:
-            if np.mean(im[:, j + 1]) < m:
+            if np.mean(im[:, j + 1]) < thr:
                 v_lines.append(np.array([]))
     if len(v_lines[-1]) != 0:
         return len(v_lines) - 1
     else:
         return 0
 
-#def horizontal_lines(im):
-
+def horizontal_lines(im): #подсчет количества горизонтальных линий у буквы
+    h, _ = im.shape
+    h_lines = [np.array([])]
+    for i in range(h-1):
+        thr = 60.0
+        if np.mean(im[i, :]) < thr:
+            if np.mean(im[i+1, :]) < thr:
+                if len(h_lines[-1]) != 0:
+                    h_lines[-1] = np.hstack((h_lines[-1], im[i, :]))
+                else:
+                    h_lines[-1] = im[i, :].copy()
+        else:
+            if np.mean(im[i + 1, :]) < thr and len(h_lines[-1]) != 0:
+                h_lines.append(np.array([]))
+    if len(h_lines[-1]) != 0:
+        return len(h_lines)
+    else:
+        return 0
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
@@ -77,7 +93,7 @@ for i in range(len(letters)):
 
     if len(letters[i]) != 0:
         #print(incnt(letter), i)
-        print(vertical_lines(letter), i)
+        print(horizontal_lines(letter), i)
         cv2.imshow("test" + str(i), letter)
 
 cv2.waitKey(0)
