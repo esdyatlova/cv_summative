@@ -82,6 +82,23 @@ def horizontal_lines(im): #подсчет количества горизонт�
     else:
         return 0
 
+def first_v_line(im): #есть ли у буквы слева черная линия (или что-то похожее на нее)
+    h, w = im.shape
+
+    thr = 150.0
+    white = 236.0
+    u = 0
+    while np.mean(im[:, u]) > white:
+        if u <= w-2:
+            u += 1
+        else:
+            break
+    if np.mean(im[:, u+2]) < thr:
+        return 1
+    else:
+        return 0
+
+
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
 
@@ -92,8 +109,7 @@ for i in range(len(letters)):
     letter = cv2.rotate((cv2.flip(letters[i], 0)), 0)
 
     if len(letters[i]) != 0:
-        #print(incnt(letter), i)
-        print(horizontal_lines(letter), i)
-        cv2.imshow("test" + str(i), letter)
+        #cv2.imshow("test" + str(i), letter)
+        print(first_v_line(letter), i)
 
 cv2.waitKey(0)
