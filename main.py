@@ -36,12 +36,14 @@ def split(img): #функция делит текст на символы
                     letters.append(np.array([]))
     return letters
 
+
 def incnt(im): #подсчет количества внутренних контуров у буквы
     ret, thresh = cv2.threshold(im, 27, 255, cv2.THRESH_BINARY_INV)
     contours_all, i = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours_ex, i2 = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     return len(contours_all) - len(contours_ex)
+
 
 def vertical_lines(im): #подсчет количества вертикальных линий у буквы
     _, w = im.shape
@@ -63,6 +65,7 @@ def vertical_lines(im): #подсчет количества вертикаль�
     else:
         return 0
 
+
 def horizontal_lines(im): #подсчет количества горизонтальных линий у буквы
     h, _ = im.shape
     h_lines = [np.array([])]
@@ -82,8 +85,9 @@ def horizontal_lines(im): #подсчет количества горизонт�
     else:
         return 0
 
+
 def first_v_line(im): #есть ли у буквы слева черная линия (или что-то похожее на нее)
-    h, w = im.shape
+    _, w = im.shape
 
     thr = 150.0
     white = 236.0
@@ -99,6 +103,22 @@ def first_v_line(im): #есть ли у буквы слева черная ли�
         return 0
 
 
+def first_h_line(im): #есть ли у буквы сверху черная линия (или что-то похожее на нее)
+    h, _ = im.shape
+
+    thr = 150.0
+    white = 236.0
+    u = 0
+    while np.mean(im[u, :]) > white:
+        if u <= h - 2:
+            u += 1
+        else:
+            break
+    if np.mean(im[u + 2, :]) < thr:
+        return 1
+    else:
+        return 0
+
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
 
@@ -109,7 +129,7 @@ for i in range(len(letters)):
     letter = cv2.rotate((cv2.flip(letters[i], 0)), 0)
 
     if len(letters[i]) != 0:
-        #cv2.imshow("test" + str(i), letter)
-        print(first_v_line(letter), i)
+        cv2.imshow("test" + str(i), letter)
+        print(first_h_line(letter), i)
 
 cv2.waitKey(0)
