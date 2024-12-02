@@ -1,7 +1,34 @@
 import numpy as np
 import cv2
 
-img = cv2.imread("all_capital_letters.jpg") #чтение файла (изображения)
+letters_dict = {"0101111":"|",
+                "1010000":"А",
+                "1131110":"Б",
+                "2131111":"В",
+                "0111100":"Г",
+                "1110100":"Д",
+                "0131110":"Е",
+                "0100000":"Ж",
+                "0000001":"З",
+                "0201001":"И",
+                "0101000":"К",
+                "0110101":"Л",
+                "0211001":"Н",
+                "1001001":"О",
+                "0211101":"П",
+                "1121100":"Р",
+                "0001000":"С",
+                "0110100":"Т",
+                "0000000":"У",
+                "2100000":"Ф",
+                "0211000":"Ц",
+                "0111001":"Ч",
+                "0311011":"Ш",
+                "0311001":"Щ",
+                "1100010":"Ъ",
+                "1121010":"Ь",
+                "1101001":"Ю",
+                "2021101":"Я"}
 
 def split(img): #функция делит текст на символы
     lines = [np.array([])]
@@ -37,12 +64,12 @@ def split(img): #функция делит текст на символы
     return letters
 
 
-def incnt(im): #подсчет количества внутренних контуров у буквы
+def internal_contours(im): #подсчет количества внутренних контуров у буквы
     ret, thresh = cv2.threshold(im, 27, 255, cv2.THRESH_BINARY_INV)
     contours_all, i = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours_ex, i2 = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    return len(contours_all) - len(contours_ex)
+    return str(len(contours_all) - len(contours_ex))
 
 
 def vertical_lines(im): #подсчет количества вертикальных линий у буквы
@@ -61,9 +88,9 @@ def vertical_lines(im): #подсчет количества вертикаль�
             if np.mean(im[:, j + 1]) < thr:
                 v_lines.append(np.array([]))
     if len(v_lines[-1]) != 0:
-        return len(v_lines) - 1
+        return str(len(v_lines) - 1)
     else:
-        return 0
+        return "0"
 
 
 def horizontal_lines(im): #подсчет количества горизонтальных линий у буквы
@@ -81,9 +108,9 @@ def horizontal_lines(im): #подсчет количества горизонт�
             if np.mean(im[i + 1, :]) < thr and len(h_lines[-1]) != 0:
                 h_lines.append(np.array([]))
     if len(h_lines[-1]) != 0:
-        return len(h_lines)
+        return str(len(h_lines))
     else:
-        return 0
+        return "0"
 
 
 def first_v_line(im): #есть ли у буквы слева черная линия (или что-то похожее на нее)
@@ -98,9 +125,9 @@ def first_v_line(im): #есть ли у буквы слева черная ли�
         else:
             break
     if np.mean(im[:, u+2]) < thr:
-        return 1
+        return "1"
     else:
-        return 0
+        return "0"
 
 
 def first_h_line(im): #есть ли у буквы сверху черная линия (или что-то похожее на нее)
@@ -115,9 +142,10 @@ def first_h_line(im): #есть ли у буквы сверху черная л�
         else:
             break
     if np.mean(im[u + 2, :]) < thr:
-        return 1
+        return "1"
     else:
-        return 0
+        return "0"
+
 
 def last_h_line(im): #есть ли у буквы справа черная линия (или что-то похожее на нее)
     h, _ = im.shape
@@ -131,9 +159,10 @@ def last_h_line(im): #есть ли у буквы справа черная ли
         else:
             break
     if np.mean(im[h - u - 2, :]) < thr:
-        return 1
+        return "1"
     else:
-        return 0
+        return "0"
+
 
 def last_v_line(im): #есть ли у буквы справа черная линия (или что-то похожее на нее)
     _, w = im.shape
@@ -147,21 +176,37 @@ def last_v_line(im): #есть ли у буквы справа черная ли
         else:
             break
     if np.mean(im[:, w - u - 2]) < thr:
-        return 1
+        return "1"
     else:
-        return 0
+        return "0"
 
+
+def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline):
+    key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
+    print(key)
+    if letters_dict.get(key) is not None:
+        return letters_dict.get(key)
+    else:
+        return ""
+
+img = cv2.imread("test1.jpg") #чтение файла (изображения)
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
 
 letters = split(img)
+text = ""
 
 for i in range(len(letters)):
 
     letter = cv2.rotate((cv2.flip(letters[i], 0)), 0)
 
     if len(letters[i]) != 0:
-        cv2.imshow("test" + str(i), letter)
-        print(last_v_line(letter), i)
+        text += defining_letter(internal_contours(letter), vertical_lines(letter),
+                               horizontal_lines(letter), first_v_line(letter),
+                               first_h_line(letter), last_h_line(letter), last_v_line(letter))
+    text = text.replace("Ь|", "Ы")
+
+
+print(text)
 
 cv2.waitKey(0)
