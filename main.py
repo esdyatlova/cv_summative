@@ -119,6 +119,38 @@ def first_h_line(im): #есть ли у буквы сверху черная л�
     else:
         return 0
 
+def last_h_line(im): #есть ли у буквы справа черная линия (или что-то похожее на нее)
+    h, _ = im.shape
+
+    thr = 150.0
+    white = 236.0
+    u = 0
+    while np.mean(im[h-u-1, :]) > white:
+        if u < h-1:
+            u += 1
+        else:
+            break
+    if np.mean(im[h - u - 2, :]) < thr:
+        return 1
+    else:
+        return 0
+
+def last_v_line(im): #есть ли у буквы справа черная линия (или что-то похожее на нее)
+    _, w = im.shape
+
+    thr = 150.0
+    white = 236.0
+    u = 0
+    while np.mean(im[:, w-u-1]) > white:
+        if u < w - 1:
+            u += 1
+        else:
+            break
+    if np.mean(im[:, w - u - 2]) < thr:
+        return 1
+    else:
+        return 0
+
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
 
@@ -130,6 +162,6 @@ for i in range(len(letters)):
 
     if len(letters[i]) != 0:
         cv2.imshow("test" + str(i), letter)
-        print(first_h_line(letter), i)
+        print(last_v_line(letter), i)
 
 cv2.waitKey(0)
