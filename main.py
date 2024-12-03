@@ -28,7 +28,10 @@ letters_dict = {"0101111":"|",
                 "1100010":"Ъ",
                 "1121010":"Ь",
                 "1101001":"Ю",
-                "2021101":"Я"}
+                "2021101":"Я",
+                "0001111":"",
+                "0011111":"",
+                "0201011":""}
 
 def split(img): #функция делит текст на символы
     lines = [np.array([])]
@@ -187,9 +190,14 @@ def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline):
     if letters_dict.get(key) is not None:
         return letters_dict.get(key)
     else:
-        return ""
+        min = 99999999
+        for item in letters_dict:
+            if abs(int(item) - int(key)) < min:
+                min = abs(int(item) - int(key))
+                min_item = item
+        return letters_dict.get(str(min_item))
 
-img = cv2.imread("test1.jpg") #чтение файла (изображения)
+img = cv2.imread("all_capital_letters.jpg") #чтение файла (изображения)
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
 
