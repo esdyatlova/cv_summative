@@ -3,6 +3,7 @@ import cv2
 
 img = cv2.imread("test5.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
 
+
 letters_dict = {"0111111":"|",
                 "1010000":"А",
                 "1131110":"Б",
@@ -168,19 +169,50 @@ def last_v_line(im): #есть ли у буквы справа черная ли
     else:
         return "0"
 
+def ts_tsh(im):
+    _, w = im.shape
+    v_lines = [np.array([])]
 
-def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline):
-    key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
-    print(key)
-    if letters_dict.get(key) is not None:
-        return letters_dict.get(key)
+    for j in range(w - 1):
+        thr = 70.0
+        if np.mean(im[:, j]) < thr:
+            if np.mean(im[:, j + 1]) < thr:
+                if len(v_lines[-1]) != 0:
+                    v_lines[-1] = np.vstack([v_lines[-1], im[:, j]])
+                else:
+                    v_lines[-1] = im[:, j].copy()
+        else:
+            if np.mean(im[:, j + 1]) < thr:
+                v_lines.append(np.array([]))
+    if len(v_lines[-1]) != 0:
+        return str(len(v_lines) - 1)
     else:
-        min = 99999999
+        return "0"
+
+
+def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh):
+    key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
+    if letters_dict.get(key) is not None:
+        ans = letters_dict.get(key)
+    else:
+        min = 8
         for item in letters_dict:
-            if abs(int(item) - int(key)) < min:
-                min = abs(int(item) - int(key))
-                min_item = item
-        return letters_dict.get(str(min_item))
+            dif = 0
+            if item[0] == key[0]:
+                for i in range(7): # 7 - количество символов в индивидуальных кодах букв
+                    if item[i] != key[i]:
+                        dif += 1
+                if dif < min:
+                    min = dif
+                    min_item = item
+                elif dif == min:
+                    if abs(int(item) - int(key)) < abs(int(min_item) - int(key)):
+                        min_item = item
+        ans = letters_dict.get(str(min_item))
+    if ans == "Ц":
+        if tstsh == "3":
+            ans = "Щ"
+    return ans
 
 letters = split(img)
 text = ""
@@ -190,11 +222,10 @@ for i in range(len(letters)):
     letter = letters[i][2]
 
     if len(letters[i]) != 0 and np.shape(letter)[0] > 10:
-        #print(last_v_line(letter))
-        cv2.imshow("test" + str(i), letter)
+        #cv2.imshow("test" + str(i), letter)
         text += defining_letter(internal_contours(letter), vertical_lines(letter),
                                horizontal_lines(letter), first_v_line(letter),
-                               first_h_line(letter), last_h_line(letter), last_v_line(letter))
+                               first_h_line(letter), last_h_line(letter), last_v_line(letter), ts_tsh(letter))
     text = text.replace("Ь|", "Ы")
 
 
