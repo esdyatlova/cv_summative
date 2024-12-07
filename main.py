@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-img = cv2.imread("test5.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
+img = cv2.imread("test2.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
 
 
 letters_dict = {"0111111":"|",
@@ -86,7 +86,7 @@ def horizontal_lines(im): #подсчет количества горизонт�
     h, _ = im.shape
     h_lines = [np.array([])]
     for i in range(h-1):
-        thr = 110.0
+        thr = 100.0
         if np.mean(im[i, :]) < thr:
             if np.mean(im[i+1, :]) < thr:
                 if len(h_lines[-1]) != 0:
@@ -189,8 +189,26 @@ def ts_tsh(im):
     else:
         return "0"
 
+def z_e(im):
+    h, _ = im.shape
+    h_lines = [np.array([])]
+    for i in range(h - 1):
+        thr = 120.0
+        if np.mean(im[i, :]) < thr:
+            if np.mean(im[i + 1, :]) < thr:
+                if len(h_lines[-1]) != 0:
+                    h_lines[-1] = np.hstack((h_lines[-1], im[i, :]))
+                else:
+                    h_lines[-1] = im[i, :].copy()
+        else:
+            if np.mean(im[i + 1, :]) < thr and len(h_lines[-1]) != 0:
+                h_lines.append(np.array([]))
+    if len(h_lines[-1]) != 0:
+        return str(len(h_lines))
+    else:
+        return "0"
 
-def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh):
+def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze):
     key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
     if letters_dict.get(key) is not None:
         ans = letters_dict.get(key)
@@ -212,6 +230,13 @@ def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh):
     if ans == "Ц":
         if tstsh == "3":
             ans = "Щ"
+    if ans == "З" or ans == "Э":
+    #print(ze)
+        if ze == "3":
+            ans = "Э"
+        else:
+            ans = "З"
+    #print(key, ans)
     return ans
 
 letters = split(img)
@@ -225,7 +250,8 @@ for i in range(len(letters)):
         #cv2.imshow("test" + str(i), letter)
         text += defining_letter(internal_contours(letter), vertical_lines(letter),
                                horizontal_lines(letter), first_v_line(letter),
-                               first_h_line(letter), last_h_line(letter), last_v_line(letter), ts_tsh(letter))
+                               first_h_line(letter), last_h_line(letter), last_v_line(letter), ts_tsh(letter),
+                                z_e(letter))
     text = text.replace("Ь|", "Ы")
 
 
