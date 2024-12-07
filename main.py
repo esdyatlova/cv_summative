@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-img = cv2.imread("all_capital_letters.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
+img = cv2.imread("test2.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
 
 
 letters_dict = {"0111111":"|",
@@ -51,23 +51,23 @@ def split(im): #функция делит текст на символы
 
     x_previous = letters[0][0]
     w_previous = letters[0][3]
-    d_mean = x_previous
+    y_previous = letters[0][2]
+    d_mean = w_previous * 0.3
 
     for i in range(1, len(letters)):
         x = letters[i][0]
         y = letters[i][1]
         w = letters[i][3]
-        d = abs(x - (x_previous + w_previous))
-        print(d)
-        if x - x_previous < 0 and not isinstance(letters[i-1][2], str):
+        d = x - (x_previous + w_previous)
+        if x - x_previous < 0 and round(y/100) != round(y_previous/100) and not isinstance(letters[i-1][2], str):
             letters.insert(i, (x_previous + w, y, "enter"))
-        elif d > d_mean and not isinstance(letters[i-1][2], str):
+        elif d > 0 and d > d_mean and not isinstance(letters[i-1][2], str):
             letters.insert(i, (x_previous + w, y, "space"))
 
 
         x_previous = x
         w_previous = w
-        d_mean = (d_mean*i+d)/(i+1)
+        y_previous = y
 
     return letters
 
@@ -279,7 +279,7 @@ def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze
             ans = "П"
         else:
             ans = "Л"
-    print(key, ans)
+    #print(key, ans)
     return ans
 
 letters = split(img)
