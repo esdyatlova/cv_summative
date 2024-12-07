@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-img = cv2.imread("test2.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
+img = cv2.imread("test7.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
 
 
 letters_dict = {"0111111":"|",
@@ -208,7 +208,27 @@ def z_e(im):
     else:
         return "0"
 
-def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze):
+def l_p(im):
+    _, w = im.shape
+    v_lines = [np.array([])]
+
+    for j in range(w - 1):
+        thr = 25.0
+        if np.mean(im[:, j]) < thr:
+            if np.mean(im[:, j + 1]) < thr:
+                if len(v_lines[-1]) != 0:
+                    v_lines[-1] = np.vstack([v_lines[-1], im[:, j]])
+                else:
+                    v_lines[-1] = im[:, j].copy()
+        else:
+            if np.mean(im[:, j + 1]) < thr:
+                v_lines.append(np.array([]))
+    if len(v_lines[-1]) != 0:
+        return str(len(v_lines) - 1)
+    else:
+        return "0"
+
+def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze, lp):
     key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
     if letters_dict.get(key) is not None:
         ans = letters_dict.get(key)
@@ -231,11 +251,15 @@ def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze
         if tstsh == "3":
             ans = "Щ"
     if ans == "З" or ans == "Э":
-    #print(ze)
         if ze == "3":
             ans = "Э"
         else:
             ans = "З"
+    if ans == "Л" or ans == "П":
+        if lp == "2":
+            ans = "П"
+        else:
+            ans = "Л"
     #print(key, ans)
     return ans
 
@@ -251,7 +275,7 @@ for i in range(len(letters)):
         text += defining_letter(internal_contours(letter), vertical_lines(letter),
                                horizontal_lines(letter), first_v_line(letter),
                                first_h_line(letter), last_h_line(letter), last_v_line(letter), ts_tsh(letter),
-                                z_e(letter))
+                                z_e(letter), l_p(letter))
     text = text.replace("Ь|", "Ы")
 
 
