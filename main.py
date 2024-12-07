@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-img = cv2.imread("test7.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
+img = cv2.imread("all_capital_letters.jpg", cv2.IMREAD_GRAYSCALE) #чтение файла (изображения)
 
 
 letters_dict = {"0111111":"|",
@@ -34,7 +34,6 @@ letters_dict = {"0111111":"|",
                 "1121101":"Я"}
 
 def split(im): #функция делит текст на символы
-    #gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(im, 0, 255, cv2.THRESH_BINARY)
     img_erode = cv2.erode(thresh, np.ones((3, 3), np.uint8), iterations=1)
 
@@ -46,9 +45,29 @@ def split(im): #функция делит текст на символы
         (x, y, w, h) = cv2.boundingRect(contours[i])
 
         if hierarchy[0][i][3] == 0:
-            letters.append((x, y, np.array(im[y:y+h, x:x+w])))
+            letters.append((x, y, np.array(im[y:y + h, x:x + w]), w))
 
     letters.sort(key=lambda elem: (round(elem[1]/100), elem[0]), reverse=False)
+
+    x_previous = letters[0][0]
+    w_previous = letters[0][3]
+    d_mean = x_previous
+
+    for i in range(1, len(letters)):
+        x = letters[i][0]
+        y = letters[i][1]
+        w = letters[i][3]
+        d = abs(x - (x_previous + w_previous))
+        print(d)
+        if x - x_previous < 0 and not isinstance(letters[i-1][2], str):
+            letters.insert(i, (x_previous + w, y, "enter"))
+        elif d > d_mean and not isinstance(letters[i-1][2], str):
+            letters.insert(i, (x_previous + w, y, "space"))
+
+
+        x_previous = x
+        w_previous = w
+        d_mean = (d_mean*i+d)/(i+1)
 
     return letters
 
@@ -156,7 +175,7 @@ def last_h_line(im): #есть ли у буквы справа черная ли
 def last_v_line(im): #есть ли у буквы справа черная линия (или что-то похожее на нее)
     _, w = im.shape
 
-    thr = 150.0
+    thr = 170.0
     white = 236.0
     u = 0
     while np.mean(im[:, w-u-1]) > white:
@@ -185,9 +204,9 @@ def ts_tsh(im):
             if np.mean(im[:, j + 1]) < thr:
                 v_lines.append(np.array([]))
     if len(v_lines[-1]) != 0:
-        return str(len(v_lines) - 1)
+        return len(v_lines) - 1
     else:
-        return "0"
+        return 0
 
 def z_e(im):
     h, _ = im.shape
@@ -204,9 +223,9 @@ def z_e(im):
             if np.mean(im[i + 1, :]) < thr and len(h_lines[-1]) != 0:
                 h_lines.append(np.array([]))
     if len(h_lines[-1]) != 0:
-        return str(len(h_lines))
+        return len(h_lines)
     else:
-        return "0"
+        return 0
 
 def l_p(im):
     _, w = im.shape
@@ -224,9 +243,9 @@ def l_p(im):
             if np.mean(im[:, j + 1]) < thr:
                 v_lines.append(np.array([]))
     if len(v_lines[-1]) != 0:
-        return str(len(v_lines) - 1)
+        return len(v_lines) - 1
     else:
-        return "0"
+        return 0
 
 def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze, lp):
     key = incnt + vnum + hnum + fvline + fhline + lhline + lvline
@@ -248,19 +267,19 @@ def defining_letter(incnt, vnum, hnum, fvline, fhline, lhline, lvline, tstsh, ze
                         min_item = item
         ans = letters_dict.get(str(min_item))
     if ans == "Ц":
-        if tstsh == "3":
+        if tstsh >= 3:
             ans = "Щ"
     if ans == "З" or ans == "Э":
-        if ze == "3":
+        if ze == 3:
             ans = "Э"
         else:
             ans = "З"
     if ans == "Л" or ans == "П":
-        if lp == "2":
+        if lp == 2:
             ans = "П"
         else:
             ans = "Л"
-    #print(key, ans)
+    print(key, ans)
     return ans
 
 letters = split(img)
@@ -270,7 +289,13 @@ for i in range(len(letters)):
 
     letter = letters[i][2]
 
-    if len(letters[i]) != 0 and np.shape(letter)[0] > 10:
+    if isinstance(letter, str):
+        if letter == "space":
+            text += " "
+        if letter == "enter":
+            text += "\n"
+
+    elif len(letters[i]) != 0 and np.shape(letter)[0] > 10:
         #cv2.imshow("test" + str(i), letter)
         text += defining_letter(internal_contours(letter), vertical_lines(letter),
                                horizontal_lines(letter), first_v_line(letter),
